@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes">
+    <title>棋盘图查看器</title>
+  </head>
+  <body>
+    <style>
+      img{
+        display:block;
+        max-width:100%;
+        margin-top: 1rem;
+      }
+    </style>
+    <div style="padding:0 0.5rem">
+      <h1>棋盘图查看器</h1>
+      <input type="file" id="ipt" accept="image/*" multiple="true" />
+      <div id="container"></div>
+      <script>
+        let toclearlist=[]
+        function makeimg(img,func){
+          let cvs=document.createElement("canvas")
+          let ctx=cvs.getContext("2d")
+          let w=img.width
+          let h=img.height
+          cvs.width=w
+          cvs.height=h
+          ctx.drawImage(img,0,0,w,h)
+          let imgdata=ctx.getImageData(0,0,w,h)
+          for(let i=0;i<w;i++){
+            for(let j=1-(i&1);j<h;j+=2){
+              imgdata.data[(i+j*w)*4  ]=-imgdata.data[(i+j*w)*4  ]+255
+              imgdata.data[(i+j*w)*4+1]=-imgdata.data[(i+j*w)*4+1]+255
+              imgdata.data[(i+j*w)*4+2]=-imgdata.data[(i+j*w)*4+2]+255
+            }
+          }
+          ctx.putImageData(imgdata,0,0)
+          cvs.toBlob(func,"image/png")
+        }
+        let ipt=document.getElementById("ipt")
+        ipt.onchange=()=>{
+          let container=document.getElementById("container")
+          container.innerHTML=""
+          toclearlist.map(x=>URL.revokeObjectURL(x))
+          toclearlist=[]
+          Array.from(ipt.files).map(file=>{
+            let img=new Image()
+            let s=URL.createObjectURL(file)
+            img.src=s
+            img.onload=()=>{
+              URL.revokeObjectURL(s)
+              makeimg(img,b=>{
+                let src=URL.createObjectURL(b)
+                toclearlist.push(src)
+                let imgbox=document.createElement("img")
+                imgbox.src=src
+                container.appendChild(imgbox)
+              })
+            }
+          })
+        }
+      </script>
+    </div>
+  </body>
+</html>
